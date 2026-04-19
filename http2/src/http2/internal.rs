@@ -1,10 +1,10 @@
 use crate::HttpServer;
-use crate::http1::error::Http1Error;
-use crate::http1::types::*;
+use crate::http2::error::HttpError;
+use crate::http2::types::*;
 use std::arch::asm;
 
 impl HttpServer {
-    pub(super) fn create_socket() -> Result<i32, Http1Error> {
+    pub(super) fn create_socket() -> Result<i32, HttpError> {
         let result: i32;
         unsafe {
             asm!(
@@ -18,12 +18,12 @@ impl HttpServer {
             );
         }
         if (result < 0) {
-            return Err(Http1Error::CreateSocketError(result));
+            return Err(HttpError::CreateSocketError(result));
         }
         Ok(result)
     }
 
-    pub(super) fn bind_socket(&self) -> Result<i32, Http1Error> {
+    pub(super) fn bind_socket(&self) -> Result<i32, HttpError> {
         let addr = SockAddrIn {
             sin_family: Inet::AF_INET as u16,
             sin_port: self.port.to_be(),
@@ -44,12 +44,12 @@ impl HttpServer {
             )
         }
         if result < 0 {
-            return Err(Http1Error::BindSocketError(result));
+            return Err(HttpError::BindSocketError(result));
         }
         Ok(result)
     }
 
-    pub(super) fn set_socket_to_listen(&self) -> Result<i32, Http1Error> {
+    pub(super) fn set_socket_to_listen(&self) -> Result<i32, HttpError> {
         let result: i32;
         unsafe {
             asm!(
@@ -62,13 +62,13 @@ impl HttpServer {
             )
         }
         if result < 0 {
-            return Err(Http1Error::ListenError(result));
+            return Err(HttpError::ListenError(result));
         }
         Ok(result)
     }
 
     /// this is blocking call, will listen until any request to port received
-    pub(super) fn accept_incoming(&mut self) -> Result<(), Http1Error> {
+    pub(super) fn accept_incoming(&mut self) -> Result<(), HttpError> {
         let result: i32;
         unsafe {
             asm!(
@@ -82,13 +82,13 @@ impl HttpServer {
             )
         }
         if result < 0 {
-            return Err(Http1Error::AcceptError(result));
+            return Err(HttpError::AcceptError(result));
         }
         self.listener_socket = Some(result);
         Ok(())
     }
 
-    pub(super) fn read_socket(&self) -> Result<([u8; 1024], isize), Http1Error> {
+    pub(super) fn read_socket(&self) -> Result<([u8; 1024], isize), HttpError> {
         let mut buffer: Buffer = [0; 1024];
         let count: isize;
         let listener = self.listener_socket.unwrap();
@@ -105,12 +105,12 @@ impl HttpServer {
             )
         }
         if count < 0 {
-            return Err(Http1Error::BindSocketError(count as i32));
+            return Err(HttpError::BindSocketError(count as i32));
         }
         Ok((buffer, count))
     }
 
-    pub(super) fn close_socket(&mut self) -> Result<(), Http1Error> {
+    pub(super) fn close_socket(&mut self) -> Result<(), HttpError> {
         let result: i32;
         unsafe {
             asm!(
@@ -122,7 +122,7 @@ impl HttpServer {
             )
         }
         if result < 0 {
-            return Err(Http1Error::BindSocketError(result));
+            return Err(HttpError::BindSocketError(result));
         }
         self.listener_socket = None;
         Ok(())
@@ -131,7 +131,7 @@ impl HttpServer {
     /// Kernel will have socket timeout on restart of the server app,
     /// so we need to reuse the socket instead of waiting for assigning
     /// (anyways assign was failing during TIMOUT)
-    pub(super) fn set_reuse_address(&self) -> Result<i32, Http1Error> {
+    pub(super) fn set_reuse_address(&self) -> Result<i32, HttpError> {
         let sock: i32 = 1;
         let result: i32;
         unsafe {
@@ -149,12 +149,12 @@ impl HttpServer {
         }
 
         if result < 0 {
-            return Err(Http1Error::BindSocketError(result));
+            return Err(HttpError::BindSocketError(result));
         }
         Ok(result)
     }
 
-    pub(super) fn write_socket(&self, text: &str) -> Result<i32, Http1Error> {
+    pub(super) fn write_socket(&self, text: &str) -> Result<i32, HttpError> {
         let result: i32;
         unsafe {
             asm!(
@@ -168,7 +168,7 @@ impl HttpServer {
             )
         }
         if result < 0 {
-            return Err(Http1Error::ListenError(result));
+            return Err(HttpError::ListenError(result));
         }
         Ok(result)
     }

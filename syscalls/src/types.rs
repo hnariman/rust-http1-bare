@@ -1,3 +1,6 @@
+#![allow(non_camel_case_types)]
+
+use crate::error::HttpError;
 #[repr(C)]
 pub struct SockAddrIn {
     pub sin_family: u16,
@@ -30,3 +33,5 @@ pub enum SockStream {
     TCP = 1,
     UDP = 2,
 }
+
+pub type Result<T> = core::result::Result<T, HttpError>;

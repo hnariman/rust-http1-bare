@@ -1,12 +1,10 @@
-#![allow(unused, non_camel_case_types, clippy::upper_case_acronyms)]
 use core::result;
+
+use crate::http2::error::HttpError;
 
 pub mod error;
 pub mod internal;
 pub mod types;
-
-pub use error::Http1Error;
-pub use types::{Buffer, Inet, LinuxSyscalls, SockAddrIn, SockStream};
 
 pub struct HttpServer {
     socket_fd: i32,
@@ -15,7 +13,7 @@ pub struct HttpServer {
 }
 
 impl HttpServer {
-    pub fn new(port: u16) -> Result<Self, Http1Error> {
+    pub fn new(port: u16) -> Result<Self, HttpError> {
         let fd = HttpServer::create_socket()?;
         Ok(Self {
             socket_fd: fd,
@@ -24,7 +22,7 @@ impl HttpServer {
         })
     }
 
-    pub fn listen(&mut self) -> Result<(), Http1Error> {
+    pub fn listen(&mut self) -> Result<(), HttpError> {
         self.set_reuse_address();
         self.listener_socket = Some(self.bind_socket()?);
         self.set_socket_to_listen()?;
